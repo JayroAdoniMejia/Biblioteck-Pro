@@ -38,14 +38,21 @@ public class BookController {
         return bookRepository.findAll();
     }
 
+    /**
+     * Búsqueda Pro: Filtra libros por un término global.
+     */
+    @GetMapping("/search")
+    public List<Book> searchBooks(@RequestParam("q") String query) {
+        return bookRepository.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCaseOrCategoryContainingIgnoreCase(
+            query, query, query
+        );
+    }
+
     @PostMapping
     public Book createBook(@RequestBody Book book) {
         return bookRepository.save(book);
     }
 
-    /**
-     * Sube un libro incluyendo validación de duplicados y metadatos.
-     */
     @PostMapping("/upload")
     public ResponseEntity<?> uploadBook(
             @RequestParam("title") String title,
@@ -53,18 +60,16 @@ public class BookController {
             @RequestParam("category") String category,
             @RequestParam("year") Integer year,
             @RequestParam("description") String description,
+            @RequestParam(value = "imageUrl", required = false) String imageUrl, // Nuevo campo para portadas
             @RequestParam("file") MultipartFile file) throws Exception {
         
-        // 1. VALIDACIÓN: Verificar si ya existe (Ignorando mayúsculas/minúsculas)
         if (bookRepository.existsByTitleIgnoreCaseAndAuthorIgnoreCase(title, author)) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("Error: Ya existe un libro registrado con el título '" + title + "' y autor '" + author + "'.");
         }
         
-        // 2. Guardar archivo físico usando el servicio
         String fileName = fileStorageService.save(file);
         
-        // 3. Mapear datos al modelo
         Book book = new Book();
         book.setTitle(title);
         book.setAuthor(author);
@@ -72,8 +77,8 @@ public class BookController {
         book.setYear(year);
         book.setDescription(description);
         book.setPdfUrl(fileName); 
+        book.setImageUrl(imageUrl); // Persistimos la URL de la portada en MongoDB
         
-        // 4. Persistir en MongoDB
         Book savedBook = bookRepository.save(book);
         return ResponseEntity.ok(savedBook);
     }
