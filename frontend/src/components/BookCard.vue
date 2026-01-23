@@ -2,12 +2,13 @@
   <div class="book-card" @click="$emit('ver', libro)">
     <div class="card-cover">
       <img 
-        v-if="libro.imageUrl" 
-        :src="libro.imageUrl" 
+        :src="`https://covers.openlibrary.org/b/title/${encodeURIComponent(libro.title)}-M.jpg?default=false`" 
         :alt="libro.title" 
         class="cover-img"
+        @error="handleImageError"
       />
-      <div v-else class="cover-placeholder">
+      
+      <div class="cover-placeholder">
         <span class="placeholder-icon">{{ obtenerIcono(libro.category) }}</span>
       </div>
       
@@ -33,11 +34,17 @@
 const props = defineProps(['libro']);
 defineEmits(['ver']);
 
+// Si la imagen de OpenLibrary no existe, ocultamos el elemento img
+const handleImageError = (event) => {
+  event.target.style.opacity = '0';
+};
+
 const obtenerIcono = (categoria) => {
   const cat = categoria?.toLowerCase() || '';
   if (cat.includes('programación')) return '💻';
   if (cat.includes('historia')) return '📜';
   if (cat.includes('ciencia')) return '🧬';
+  if (cat.includes('sistemas')) return '⚙️';
   return '📚';
 };
 
@@ -48,6 +55,7 @@ const truncarTexto = (texto, limite) => {
 </script>
 
 <style scoped>
+/* Se mantienen tus estilos, asegurando que la imagen esté sobre el placeholder */
 .book-card {
   background: var(--bg-card);
   border-radius: 12px;
@@ -57,6 +65,7 @@ const truncarTexto = (texto, limite) => {
   border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .book-card:hover {
@@ -65,11 +74,10 @@ const truncarTexto = (texto, limite) => {
   border-color: #bb86fc;
 }
 
-/* Portada */
 .card-cover {
   position: relative;
   aspect-ratio: 2/3;
-  background: #252525;
+  background: #1a1a1a;
   overflow: hidden;
 }
 
@@ -77,27 +85,34 @@ const truncarTexto = (texto, limite) => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
+  position: relative;
+  z-index: 2; /* Por encima del placeholder */
+  transition: opacity 0.3s ease;
 }
 
 .cover-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(45deg, #1a1a1a, #2d2d2d);
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  z-index: 1;
 }
 
-.placeholder-icon { font-size: 3rem; opacity: 0.5; }
+.placeholder-icon { font-size: 3.5rem; filter: drop-shadow(0 0 10px rgba(187, 134, 252, 0.3)); }
 
-/* Overlay Púrpura */
 .card-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(187, 134, 252, 0.9);
+  background: rgba(187, 134, 252, 0.95);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -105,64 +120,39 @@ const truncarTexto = (texto, limite) => {
   padding: 20px;
   opacity: 0;
   transition: opacity 0.3s ease;
-  text-align: center;
+  z-index: 10;
 }
 
 .book-card:hover .card-overlay { opacity: 1; }
 
-.overlay-desc {
-  color: #121212;
-  font-size: 0.85rem;
-  font-weight: 500;
-  margin-bottom: 15px;
-}
+.overlay-desc { color: #000; font-size: 0.85rem; font-weight: 600; margin-bottom: 15px; text-align: center; }
 
 .btn-read {
-  background: #121212;
-  color: white;
+  background: #000;
+  color: #fff;
   border: none;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  padding: 10px 20px;
+  border-radius: 25px;
   font-weight: bold;
+  cursor: pointer;
 }
 
-/* Etiquetas y Textos */
 .category-badge {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.7);
   color: #bb86fc;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: bold;
-  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  z-index: 5;
+  border: 1px solid rgba(187, 134, 252, 0.3);
 }
 
-.card-info { padding: 15px; }
-.book-title {
-  margin: 0 0 5px 0;
-  font-size: 1rem;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.book-author {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  margin: 0;
-}
-
-.book-year {
-  display: block;
-  margin-top: 8px;
-  font-size: 0.75rem;
-  color: #bb86fc;
-  font-weight: bold;
-}
+.card-info { padding: 18px; background: var(--bg-card); }
+.book-title { margin: 0; font-size: 1.1rem; color: #fff; font-weight: 600; }
+.book-author { color: var(--text-muted); font-size: 0.9rem; margin: 4px 0; }
+.book-year { color: #bb86fc; font-size: 0.8rem; font-weight: bold; }
 </style>

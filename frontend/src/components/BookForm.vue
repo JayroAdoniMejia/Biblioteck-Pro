@@ -12,7 +12,8 @@ const nuevoLibro = ref({
   author: '', 
   category: 'General', 
   year: 2026, 
-  description: '' 
+  description: '',
+  imageUrl: '' // 1. Nuevo campo para la URL de la portada
 });
 
 const archivoSeleccionado = ref(null);
@@ -45,6 +46,7 @@ const enviarFormulario = async () => {
   formData.append('category', nuevoLibro.value.category);
   formData.append('year', nuevoLibro.value.year);
   formData.append('description', nuevoLibro.value.description);
+  formData.append('imageUrl', nuevoLibro.value.imageUrl); // 2. Enviamos la URL al backend
   formData.append('file', archivoSeleccionado.value);
 
   try {
@@ -68,7 +70,7 @@ const enviarFormulario = async () => {
 };
 
 const limpiarFormulario = () => {
-  nuevoLibro.value = { title: '', author: '', category: 'General', year: 2026, description: '' };
+  nuevoLibro.value = { title: '', author: '', category: 'General', year: 2026, description: '', imageUrl: '' };
   archivoSeleccionado.value = null;
   mensajeEstado.value = '';
   if (fileInput.value) fileInput.value.value = '';
@@ -82,7 +84,7 @@ const limpiarFormulario = () => {
         <span class="header-icon">🟣</span>
         <h3>Registrar Nuevo Libro</h3>
       </div>
-      <p class="subtitle">Añade documentos PDF con persistencia en MongoDB</p>
+      <p class="subtitle">Añade documentos PDF con portadas y persistencia en MongoDB</p>
     </div>
 
     <div class="form-grid">
@@ -94,6 +96,11 @@ const limpiarFormulario = () => {
       <div class="field-group">
         <label class="accent-label">Autor</label>
         <input v-model="nuevoLibro.author" placeholder="Nombre del autor" class="input-minimal" />
+      </div>
+
+      <div class="field-group full-width">
+        <label class="accent-label">URL de la Portada (Opcional)</label>
+        <input v-model="nuevoLibro.imageUrl" placeholder="https://ejemplo.com/imagen.jpg" class="input-minimal" />
       </div>
 
       <div class="field-group">
@@ -142,6 +149,7 @@ const limpiarFormulario = () => {
 </template>
 
 <style scoped>
+/* (Se mantienen tus estilos anteriores) */
 .form-card { 
   background: var(--bg-card); 
   padding: 35px; 
@@ -160,7 +168,6 @@ const limpiarFormulario = () => {
 
 .field-group { display: flex; flex-direction: column; gap: 8px; }
 
-/* Títulos resaltados en Púrpura */
 .accent-label { 
   font-size: 0.75rem; 
   color: #bb86fc; 
