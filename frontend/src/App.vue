@@ -7,12 +7,14 @@ import BookStats from './components/BookStats.vue';
 import BookTable from './components/BookTable.vue';
 import BookForm from './components/BookForm.vue';
 import BookModal from './components/BookModal.vue';
+import BookCard from './components/BookCard.vue';
 
 const API_BASE_URL = 'http://localhost:8080/api/books';
 
 const libros = ref([]);
 const filtro = ref('');
 const libroSeleccionado = ref(null);
+const vistaGrid = ref(true);
 
 const librosFiltrados = computed(() => {
   if (!filtro.value) return libros.value;
@@ -55,6 +57,11 @@ onMounted(obtenerLibros);
       </div>
       
       <div class="header-right">
+        <div class="view-toggle">
+          <button @click="vistaGrid = true" :class="{ active: vistaGrid }" title="Vista Cuadrícula">🖼️</button>
+          <button @click="vistaGrid = false" :class="{ active: !vistaGrid }" title="Vista Lista">📋</button>
+        </div>
+
         <div class="search-container">
           <input 
             v-model="filtro" 
@@ -64,26 +71,42 @@ onMounted(obtenerLibros);
           />
           <span class="search-icon">🔍</span>
         </div>
-        <button @click="obtenerLibros" class="btn-sync" title="Actualizar">
-          🔄
-        </button>
+        <button @click="obtenerLibros" class="btn-sync" title="Actualizar">🔄</button>
       </div>
     </header>
 
     <main class="app-content">
-      <div class="stats-grid">
+      <div class="stats-section">
         <BookStats :total="totalLibros" :autores="autoresUnicos" />
       </div>
 
-      <section class="main-sections">
+      <div class="form-section">
         <BookForm :baseUrl="API_BASE_URL" @libroGuardado="obtenerLibros" />
-        <BookTable 
-          :libros="librosFiltrados" 
-          :baseUrl="API_BASE_URL"
-          @eliminar="eliminarLibro"
-          @ver="l => libroSeleccionado = l"
-          @actualizar="obtenerLibros"
-        />
+      </div>
+
+      <section class="display-section">
+        <h2 class="section-title">
+          {{ vistaGrid ? '📚 Catálogo de Novedades' : '⚙️ Gestión de Inventario' }}
+        </h2>
+
+        <div v-if="vistaGrid" class="books-grid">
+          <BookCard 
+            v-for="libro in librosFiltrados" 
+            :key="libro.id" 
+            :libro="libro"
+            @ver="l => libroSeleccionado = l"
+          />
+        </div>
+
+        <div v-else class="table-container-wrapper">
+          <BookTable 
+            :libros="librosFiltrados" 
+            :baseUrl="API_BASE_URL"
+            @eliminar="eliminarLibro"
+            @ver="l => libroSeleccionado = l"
+            @actualizar="obtenerLibros"
+          />
+        </div>
       </section>
 
       <BookModal 
@@ -97,22 +120,30 @@ onMounted(obtenerLibros);
 </template>
 
 <style>
-/* PALETA DE COLORES MINIMALISTA */
+/* 1. RESET Y VARIABLES (ELIMINA LO ANTERIOR) */
 :root {
-  --bg-main: #121418;       /* Fondo oscuro profundo */
-  --bg-card: #1c1f26;       /* Fondo de secciones */
-  --bg-input: #252a33;      /* Fondo de inputs */
-  --text-main: #e0e0e0;     /* Texto principal */
-  --text-muted: #94a3b8;    /* Texto secundario */
-  --accent: #3b82f6;        /* Azul profesional (similar a tu imagen) */
-  --border: #2d333d;        /* Bordes sutiles */
+  --bg-main: #0f1115;      /* Fondo total */
+  --bg-card: #181a1f;      /* Fondo secciones */
+  --bg-input: #21252b;     /* Fondo inputs */
+  --text-main: #f8f9fa;    /* Texto */
+  --text-muted: #9ba3af;
+  --accent: #bb86fc;       /* Púrpura Pro */
+  --border: #2d333d;
 }
 
-body {
+html, body {
   margin: 0;
-  background-color: var(--bg-main);
+  padding: 0;
+  background-color: var(--bg-main) !important;
   color: var(--text-main);
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* 2. LAYOUT PRINCIPAL */
+.biblioteck-app {
+  min-height: 100vh;
+  background-color: var(--bg-main);
 }
 
 .app-header {
@@ -127,73 +158,70 @@ body {
   z-index: 100;
 }
 
-.header-left .logo-container { display: flex; align-items: center; gap: 10px; }
-.logo-icon { font-size: 1.5rem; }
-.header-left h1 { font-size: 1.2rem; font-weight: 600; margin: 0; }
+.header-left h1 { font-size: 1.2rem; color: var(--accent); margin: 0; }
 
 .header-right { display: flex; gap: 1rem; align-items: center; }
 
-/* BUSCADOR ESTILO IMAGEN GENERADA */
-.search-container {
-  position: relative;
-  width: 300px;
+/* 3. COMPONENTES DE INTERFAZ */
+.view-toggle {
+  display: flex;
+  background: var(--bg-input);
+  border-radius: 8px;
+  padding: 4px;
+  border: 1px solid var(--border);
+}
+
+.view-toggle button {
+  background: none;
+  border: none;
+  padding: 6px 14px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: 0.3s;
+  filter: grayscale(1);
+}
+
+.view-toggle button.active {
+  background: var(--accent);
+  filter: grayscale(0);
 }
 
 .minimal-search {
-  width: 100%;
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 8px 12px 8px 35px;
   color: white;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
+  width: 250px;
 }
 
-.minimal-search:focus {
-  border-color: var(--accent);
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-.search-icon {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.8rem;
-  opacity: 0.5;
-}
-
-.btn-sync {
-  background: none;
-  border: 1px solid var(--border);
-  color: white;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-/* LAYOUT DE CONTENIDO */
+/* 4. CONTENIDO */
 .app-content {
   max-width: 1200px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem; /* Evita que las cosas estén una sobre otra */
+  gap: 2.5rem;
 }
 
-.main-sections {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+.section-title {
+  color: var(--accent);
+  font-size: 1.3rem;
+  margin-bottom: 1.5rem;
 }
 
-/* Ajuste para que los componentes hijos usen la nueva paleta */
-.form-box, .stats-container, .table-container {
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 25px;
+}
+
+/* 5. FORZAR ESTILOS EN COMPONENTES HIJOS */
+.form-card, .table-container, .stats-card {
   background: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
-  border-radius: 8px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
 }
 </style>
