@@ -15,6 +15,14 @@ const libros = ref([]);
 const filtro = ref('');
 const libroSeleccionado = ref(null);
 const vistaGrid = ref(true);
+const mostrarFormulario = ref(false);
+const esModoClaro = ref(false);
+
+// Función para el selector de pastilla del tema con persistencia visual
+const aplicarTema = (claro) => {
+  esModoClaro.value = claro;
+  document.documentElement.setAttribute('data-theme', claro ? 'light' : 'dark');
+};
 
 const librosFiltrados = computed(() => {
   if (!filtro.value) return libros.value;
@@ -49,45 +57,64 @@ onMounted(obtenerLibros);
 <template>
   <div class="biblioteck-app">
     <header class="app-header">
-      <div class="header-left">
-        <div class="logo-container">
-          <span class="logo-icon">📘</span>
-          <h1>Biblioteck Pro</h1>
+      <div class="header-container">
+        <div class="header-brand">
+          <span class="logo-emoji">📘</span>
+          <div class="brand-info">
+            <h1>Biblioteck Pro</h1>
+            <span class="version-tag">v2.0</span>
+          </div>
         </div>
-      </div>
-      
-      <div class="header-right">
-        <div class="view-toggle">
-          <button @click="vistaGrid = true" :class="{ active: vistaGrid }" title="Vista Cuadrícula">🖼️</button>
-          <button @click="vistaGrid = false" :class="{ active: !vistaGrid }" title="Vista Lista">📋</button>
-        </div>
+        
+        <div class="header-actions">
+          <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input v-model="filtro" type="text" placeholder="Buscar en la biblioteca..." class="search-input" />
+          </div>
 
-        <div class="search-container">
-          <input 
-            v-model="filtro" 
-            type="text" 
-            placeholder="Buscar por título o autor..." 
-            class="minimal-search"
-          />
-          <span class="search-icon">🔍</span>
+          <div class="divider"></div>
+
+          <div class="toggle-group">
+            <div class="theme-pill">
+              <button @click="aplicarTema(false)" :class="{ active: !esModoClaro }">Dark</button>
+              <button @click="aplicarTema(true)" :class="{ active: esModoClaro }">Light</button>
+            </div>
+            
+            <button @click="vistaGrid = !vistaGrid" class="icon-btn-toggle" :title="vistaGrid ? 'Ver como Lista' : 'Ver como Grid'">
+              {{ vistaGrid ? '📋' : '🖼️' }}
+            </button>
+          </div>
         </div>
-        <button @click="obtenerLibros" class="btn-sync" title="Actualizar">🔄</button>
       </div>
     </header>
 
     <main class="app-content">
-      <div class="stats-section">
+      <div class="stats-and-actions">
         <BookStats :total="totalLibros" :autores="autoresUnicos" />
+        
+        <button 
+          @click="mostrarFormulario = !mostrarFormulario" 
+          class="btn-primary-add"
+          :class="{ active: mostrarFormulario }"
+        >
+          <span class="btn-icon">{{ mostrarFormulario ? '✕' : '＋' }}</span>
+          {{ mostrarFormulario ? 'Cerrar Registro' : 'Nuevo Libro' }}
+        </button>
       </div>
 
-      <div class="form-section">
-        <BookForm :baseUrl="API_BASE_URL" @libroGuardado="obtenerLibros" />
-      </div>
+      <transition name="slide-fade">
+        <div v-if="mostrarFormulario" class="form-container">
+          <BookForm :baseUrl="API_BASE_URL" @libroGuardado="obtenerLibros" />
+        </div>
+      </transition>
 
       <section class="display-section">
-        <h2 class="section-title">
-          {{ vistaGrid ? '📚 Catálogo de Novedades' : '⚙️ Gestión de Inventario' }}
-        </h2>
+        <div class="section-meta">
+          <h2 class="section-title">
+            {{ vistaGrid ? '📚 Catálogo' : '⚙️ Gestión' }}
+          </h2>
+          <div class="badge">{{ librosFiltrados.length }} títulos</div>
+        </div>
 
         <div v-if="vistaGrid" class="books-grid">
           <BookCard 
@@ -98,7 +125,7 @@ onMounted(obtenerLibros);
           />
         </div>
 
-        <div v-else class="table-container-wrapper">
+        <div v-else class="table-view">
           <BookTable 
             :libros="librosFiltrados" 
             :baseUrl="API_BASE_URL"
@@ -120,108 +147,117 @@ onMounted(obtenerLibros);
 </template>
 
 <style>
-/* 1. RESET Y VARIABLES (ELIMINA LO ANTERIOR) */
+/* 1. VARIABLES Y TEMAS MEJORADOS */
 :root {
-  --bg-main: #0f1115;      /* Fondo total */
-  --bg-card: #181a1f;      /* Fondo secciones */
-  --bg-input: #21252b;     /* Fondo inputs */
-  --text-main: #f8f9fa;    /* Texto */
-  --text-muted: #9ba3af;
-  --accent: #bb86fc;       /* Púrpura Pro */
-  --border: #2d333d;
+  /* DARK TOTAL: Negro profundo al estilo GitHub */
+  --bg-main: #010409;
+  --bg-header: #0d1117;
+  --bg-card: #0d1117;
+  --bg-input: #010409;
+  --text-main: #8b949e;
+  --text-bright: #f0f6fc;
+  --accent: #8957e5;
+  --accent-hover: #a371f7;
+  --border: #30363d;
+  --shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
 
-html, body {
+[data-theme="light"] {
+  --bg-main: #f6f8fa;
+  --bg-header: #ffffff;
+  --bg-card: #ffffff;
+  --bg-input: #f3f4f6;
+  --text-main: #24292f;
+  --text-bright: #000000;
+  --accent: #0969da;
+  --accent-hover: #0a76f1;
+  --border: #d0d7de;
+  --shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* Reglas Globales para evitar bordes claros */
+body {
   margin: 0;
-  padding: 0;
-  background-color: var(--bg-main) !important;
-  color: var(--text-main);
-  font-family: 'Inter', system-ui, sans-serif;
-  min-height: 100vh;
-}
-
-/* 2. LAYOUT PRINCIPAL */
-.biblioteck-app {
-  min-height: 100vh;
   background-color: var(--bg-main);
+  transition: background-color 0.3s ease;
 }
 
+/* 2. HEADER Y CONTROLES */
 .app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  background: var(--bg-card);
+  background: var(--bg-header);
   border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  padding: 0.8rem 0;
+  position: sticky; top: 0; z-index: 1000;
 }
 
-.header-left h1 { font-size: 1.2rem; color: var(--accent); margin: 0; }
+.header-container {
+  max-width: 1400px; margin: 0 auto; padding: 0 2rem;
+  display: flex; justify-content: space-between; align-items: center;
+}
 
-.header-right { display: flex; gap: 1rem; align-items: center; }
+.header-brand { display: flex; align-items: center; gap: 12px; }
+.logo-emoji { font-size: 2rem; }
+.brand-info h1 { font-size: 1.25rem; margin: 0; color: var(--text-bright); font-weight: 800; }
+.version-tag { font-size: 0.7rem; color: var(--accent); font-weight: bold; }
 
-/* 3. COMPONENTES DE INTERFAZ */
-.view-toggle {
-  display: flex;
+.header-actions { display: flex; align-items: center; gap: 1.5rem; }
+
+.search-wrapper {
   background: var(--bg-input);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 4px;
-  border: 1px solid var(--border);
+  padding: 6px 12px;
+  display: flex; align-items: center;
+}
+.search-input {
+  background: transparent; border: none; color: var(--text-main);
+  margin-left: 8px; width: 220px; outline: none; font-size: 0.9rem;
 }
 
-.view-toggle button {
-  background: none;
-  border: none;
-  padding: 6px 14px;
-  cursor: pointer;
-  border-radius: 6px;
+.divider { width: 1px; height: 24px; background: var(--border); }
+
+.toggle-group { display: flex; align-items: center; gap: 1rem; }
+
+.theme-pill {
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: 20px; padding: 3px; display: flex;
+}
+.theme-pill button {
+  padding: 5px 15px; border: none; background: none; color: var(--text-main);
+  font-size: 0.75rem; font-weight: 700; cursor: pointer; border-radius: 15px; transition: 0.3s;
+}
+.theme-pill button.active { background: var(--accent); color: white; }
+
+.icon-btn-toggle {
+  background: var(--bg-input); border: 1px solid var(--border);
+  width: 38px; height: 38px; border-radius: 10px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; 
+  font-size: 1.1rem; transition: 0.2s;
+}
+.icon-btn-toggle:hover { border-color: var(--accent); transform: scale(1.05); }
+
+/* 3. CONTENIDO */
+.app-content { max-width: 1400px; margin: 0 auto; padding: 2rem; display: flex; flex-direction: column; gap: 2.5rem; }
+.stats-and-actions { display: flex; justify-content: space-between; align-items: center; }
+
+.btn-primary-add {
+  background: var(--accent); color: white; border: none;
+  padding: 10px 20px; border-radius: 10px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
   transition: 0.3s;
-  filter: grayscale(1);
 }
+.btn-primary-add.active { background: #cf222e; }
 
-.view-toggle button.active {
-  background: var(--accent);
-  filter: grayscale(0);
-}
+.section-title { color: var(--text-bright); }
+.badge { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-main); padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; }
 
-.minimal-search {
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 8px 12px 8px 35px;
-  color: white;
-  width: 250px;
-}
+.books-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; }
 
-/* 4. CONTENIDO */
-.app-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
-}
+/* Transiciones */
+.slide-fade-enter-active { transition: all 0.3s ease-out; }
+.slide-fade-leave-active { transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1); }
+.slide-fade-enter-from, .slide-fade-leave-to { transform: translateY(-20px); opacity: 0; }
 
-.section-title {
-  color: var(--accent);
-  font-size: 1.3rem;
-  margin-bottom: 1.5rem;
-}
-
-.books-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 25px;
-}
-
-/* 5. FORZAR ESTILOS EN COMPONENTES HIJOS */
-.form-card, .table-container, .stats-card {
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-}
+@media (max-width: 1200px) { .books-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 800px) { .books-grid { grid-template-columns: repeat(2, 1fr); } }
 </style>

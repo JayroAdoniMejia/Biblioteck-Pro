@@ -17,15 +17,17 @@
       </div>
 
       <div class="card-overlay">
-        <p class="overlay-desc">{{ truncarTexto(libro.description, 120) }}</p>
-        <button class="btn-read">📖 Leer más</button>
+        <p class="overlay-desc">{{ truncarTexto(libro.description, 100) }}</p>
+        <button class="btn-read-pill">📖 Leer más</button>
       </div>
     </div>
 
     <div class="card-info">
       <h4 class="book-title">{{ libro.title }}</h4>
       <p class="book-author">{{ libro.author }}</p>
-      <span class="book-year">{{ libro.year }}</span>
+      <div class="card-footer">
+        <span class="book-year">{{ libro.year }}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -34,7 +36,6 @@
 const props = defineProps(['libro']);
 defineEmits(['ver']);
 
-// Si la imagen de OpenLibrary no existe, ocultamos el elemento img
 const handleImageError = (event) => {
   event.target.style.opacity = '0';
 };
@@ -55,29 +56,29 @@ const truncarTexto = (texto, limite) => {
 </script>
 
 <style scoped>
-/* Se mantienen tus estilos, asegurando que la imagen esté sobre el placeholder */
 .book-card {
   background: var(--bg-card);
-  border-radius: 12px;
+  border-radius: 16px; /* Bordes más redondeados y modernos */
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   height: 100%;
+  box-shadow: var(--shadow);
 }
 
 .book-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 24px rgba(187, 134, 252, 0.2);
-  border-color: #bb86fc;
+  transform: translateY(-10px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+  border-color: var(--accent);
 }
 
 .card-cover {
   position: relative;
   aspect-ratio: 2/3;
-  background: #1a1a1a;
+  background: var(--bg-input);
   overflow: hidden;
 }
 
@@ -85,74 +86,110 @@ const truncarTexto = (texto, limite) => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
   position: relative;
-  z-index: 2; /* Por encima del placeholder */
-  transition: opacity 0.3s ease;
+  z-index: 2;
+  transition: transform 0.5s ease;
+}
+
+.book-card:hover .cover-img {
+  transform: scale(1.1); /* Efecto de zoom sutil */
 }
 
 .cover-placeholder {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  top: 0; left: 0; width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--bg-input) 0%, var(--border) 100%);
   z-index: 1;
 }
 
-.placeholder-icon { font-size: 3.5rem; filter: drop-shadow(0 0 10px rgba(187, 134, 252, 0.3)); }
+.placeholder-icon { font-size: 3rem; opacity: 0.5; }
 
+/* Overlay mejorado con desenfoque de fondo */
 .card-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(187, 134, 252, 0.95);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(137, 87, 229, 0.85); /* Usamos el color de acento con transparencia */
+  backdrop-filter: blur(4px);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 25px;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: all 0.3s ease;
   z-index: 10;
 }
 
 .book-card:hover .card-overlay { opacity: 1; }
 
-.overlay-desc { color: #000; font-size: 0.85rem; font-weight: 600; margin-bottom: 15px; text-align: center; }
-
-.btn-read {
-  background: #000;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 25px;
-  font-weight: bold;
-  cursor: pointer;
+.overlay-desc { 
+  color: white; 
+  font-size: 0.85rem; 
+  font-weight: 500; 
+  margin-bottom: 20px; 
+  text-align: center;
+  line-height: 1.4;
 }
+
+/* Botón estilo pastilla profesional */
+.btn-read-pill {
+  background: white;
+  color: var(--accent);
+  border: none;
+  padding: 10px 24px;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.btn-read-pill:hover { transform: scale(1.1); }
 
 .category-badge {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  background: rgba(0, 0, 0, 0.7);
-  color: #bb86fc;
-  padding: 5px 12px;
+  top: 15px; right: 15px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+  color: white;
+  padding: 4px 12px;
   border-radius: 20px;
-  font-size: 0.65rem;
-  font-weight: 800;
+  font-size: 0.7rem;
+  font-weight: 700;
   z-index: 5;
-  border: 1px solid rgba(187, 134, 252, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.card-info { padding: 18px; background: var(--bg-card); }
-.book-title { margin: 0; font-size: 1.1rem; color: #fff; font-weight: 600; }
-.book-author { color: var(--text-muted); font-size: 0.9rem; margin: 4px 0; }
-.book-year { color: #bb86fc; font-size: 0.8rem; font-weight: bold; }
+.card-info { 
+  padding: 15px; 
+  background: var(--bg-card); 
+  flex-grow: 1; 
+  display: flex;
+  flex-direction: column;
+}
+
+.book-title { 
+  margin: 0; 
+  font-size: 1rem; 
+  color: var(--text-bright); 
+  font-weight: 700; 
+  line-height: 1.2;
+}
+
+.book-author { 
+  color: var(--text-muted); 
+  font-size: 0.85rem; 
+  margin: 6px 0 auto 0; 
+}
+
+.card-footer { margin-top: 10px; }
+
+.book-year { 
+  color: var(--accent); 
+  font-size: 0.8rem; 
+  font-weight: 800;
+  background: var(--bg-input);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
 </style>
