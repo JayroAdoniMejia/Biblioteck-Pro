@@ -18,7 +18,6 @@ const vistaGrid = ref(true);
 const mostrarFormulario = ref(false);
 const esModoClaro = ref(false);
 
-// Función para el selector de pastilla del tema con persistencia visual
 const aplicarTema = (claro) => {
   esModoClaro.value = claro;
   document.documentElement.setAttribute('data-theme', claro ? 'light' : 'dark');
@@ -59,7 +58,11 @@ onMounted(obtenerLibros);
     <header class="app-header">
       <div class="header-container">
         <div class="header-brand">
-          <span class="logo-emoji">📘</span>
+          <div class="book-animation">
+            <div class="book-spine s1"></div>
+            <div class="book-spine s2"></div>
+            <div class="book-spine s3"></div>
+          </div>
           <div class="brand-info">
             <h1>Biblioteck Pro</h1>
             <span class="version-tag">v2.0</span>
@@ -147,9 +150,7 @@ onMounted(obtenerLibros);
 </template>
 
 <style>
-/* 1. VARIABLES Y TEMAS MEJORADOS */
 :root {
-  /* DARK TOTAL: Negro profundo al estilo GitHub */
   --bg-main: #010409;
   --bg-header: #0d1117;
   --bg-card: #0d1117;
@@ -175,14 +176,44 @@ onMounted(obtenerLibros);
   --shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-/* Reglas Globales para evitar bordes claros */
 body {
   margin: 0;
   background-color: var(--bg-main);
   transition: background-color 0.3s ease;
 }
 
-/* 2. HEADER Y CONTROLES */
+/* --- ANIMACIÓN DE LIBROS ORDENÁNDOSE --- */
+.book-animation {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 35px;
+  width: 35px;
+  padding-bottom: 2px;
+}
+
+.book-spine {
+  width: 8px;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+  animation: bookStack 1.5s infinite ease-in-out;
+}
+
+.s1 { background: var(--accent); height: 15px; animation-delay: 0.1s; }
+.s2 { background: #2ecc71; height: 25px; animation-delay: 0.3s; }
+.s3 { background: #3498db; height: 20px; animation-delay: 0.5s; }
+
+@keyframes bookStack {
+  0%, 100% { transform: translateY(0) scaleY(1); opacity: 1; }
+  50% { transform: translateY(-10px) scaleY(1.1); opacity: 0.7; }
+}
+
+.header-brand:hover .book-spine {
+  animation-play-state: paused;
+  height: 30px; /* Se alinean al pasar el mouse */
+}
+/* --- FIN ANIMACIÓN --- */
+
 .app-header {
   background: var(--bg-header);
   border-bottom: 1px solid var(--border);
@@ -195,8 +226,7 @@ body {
   display: flex; justify-content: space-between; align-items: center;
 }
 
-.header-brand { display: flex; align-items: center; gap: 12px; }
-.logo-emoji { font-size: 2rem; }
+.header-brand { display: flex; align-items: center; gap: 15px; cursor: pointer; }
 .brand-info h1 { font-size: 1.25rem; margin: 0; color: var(--text-bright); font-weight: 800; }
 .version-tag { font-size: 0.7rem; color: var(--accent); font-weight: bold; }
 
@@ -236,7 +266,6 @@ body {
 }
 .icon-btn-toggle:hover { border-color: var(--accent); transform: scale(1.05); }
 
-/* 3. CONTENIDO */
 .app-content { max-width: 1400px; margin: 0 auto; padding: 2rem; display: flex; flex-direction: column; gap: 2.5rem; }
 .stats-and-actions { display: flex; justify-content: space-between; align-items: center; }
 
@@ -253,7 +282,6 @@ body {
 
 .books-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; }
 
-/* Transiciones */
 .slide-fade-enter-active { transition: all 0.3s ease-out; }
 .slide-fade-leave-active { transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1); }
 .slide-fade-enter-from, .slide-fade-leave-to { transform: translateY(-20px); opacity: 0; }
