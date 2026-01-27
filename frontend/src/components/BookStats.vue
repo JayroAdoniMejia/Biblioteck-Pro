@@ -16,7 +16,7 @@
       <span class="stat-icon">✍️</span>
     </div>
 
-    <div class="stat-card card-orange">
+    <div v-if="isAdmin" class="stat-card card-orange">
       <div class="stat-content">
         <small>ESTADO BACKEND</small>
         <div class="status-indicator">
@@ -30,7 +30,8 @@
 </template>
 
 <script setup>
-defineProps(['total', 'autores']);
+// Añadimos 'isAdmin' a las props
+defineProps(['total', 'autores', 'isAdmin']);
 </script>
 
 <style scoped>
@@ -44,7 +45,6 @@ defineProps(['total', 'autores']);
   flex: 1;
   padding: 20px;
   border-radius: 16px;
-  /* CAMBIO CLAVE: Usamos variables para que cambie con el modo claro */
   background: var(--bg-card);
   border: 1px solid var(--border);
   display: flex;
@@ -59,7 +59,6 @@ defineProps(['total', 'autores']);
   border-color: var(--accent);
 }
 
-/* Bordes laterales de color para identificar cada stat */
 .card-blue { border-left: 5px solid #3f51b5; }
 .card-green { border-left: 5px solid #4caf50; }
 .card-orange { border-left: 5px solid #ff9800; }
@@ -76,7 +75,6 @@ defineProps(['total', 'autores']);
 .stat-value {
   font-size: 2.2rem;
   font-weight: 800;
-  /* CAMBIO CLAVE: El color del texto ahora es dinámico */
   color: var(--text-bright);
 }
 
@@ -85,7 +83,6 @@ defineProps(['total', 'autores']);
   opacity: 0.2;
 }
 
-/* Estilo para el estado del Backend */
 .status-indicator {
   display: flex;
   align-items: center;
@@ -112,7 +109,6 @@ defineProps(['total', 'autores']);
   100% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
 }
 
-/* Ajuste para móviles */
 @media (max-width: 768px) {
   .stats-container { flex-direction: column; }
 }

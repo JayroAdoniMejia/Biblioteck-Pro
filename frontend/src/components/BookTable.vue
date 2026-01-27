@@ -6,7 +6,7 @@
           <th>Libro / Descripción</th>
           <th>Autor</th>
           <th>Año</th>
-          <th class="text-right">Acciones</th>
+          <th class="text-right">{{ isAdmin ? 'Gestión' : 'Opciones' }}</th>
         </tr>
       </thead>
       <tbody>
@@ -28,7 +28,13 @@
             <button @click="$emit('ver', libro)" class="btn-action btn-view" title="Ver detalles y PDF">
               👁️ Ver
             </button>
-            <button @click="$emit('eliminar', libro.id || libro._id)" class="btn-action btn-del" title="Eliminar de MongoDB">
+            
+            <button 
+              v-if="isAdmin" 
+              @click="$emit('eliminar', libro.id || libro._id)" 
+              class="btn-action btn-del" 
+              title="Eliminar de MongoDB"
+            >
               🗑️
             </button>
           </td>
@@ -48,7 +54,8 @@
 </template>
 
 <script setup>
-const props = defineProps(['libros', 'baseUrl']);
+// Añadimos 'isAdmin' a las props del componente
+const props = defineProps(['libros', 'baseUrl', 'isAdmin']);
 defineEmits(['eliminar', 'actualizar', 'ver']);
 
 const obtenerIcono = (categoria) => {
@@ -67,12 +74,13 @@ const truncarTexto = (texto, limite) => {
 </script>
 
 <style scoped>
+/* Mantienes tus estilos originales que ya están optimizados para el tema oscuro */
 .table-section {
   background: var(--bg-card);
   border-radius: 12px;
   border: 1px solid var(--border);
   overflow: hidden;
-  box-shadow: var(--shadow); /* */
+  box-shadow: var(--shadow);
 }
 
 .minimal-table {
@@ -84,9 +92,8 @@ const truncarTexto = (texto, limite) => {
 .minimal-table th {
   text-align: left;
   padding: 16px 20px;
-  /* Eliminamos el blanco transparente para que sea oscuro real */
   background: var(--bg-header); 
-  color: var(--accent); /* Resaltamos encabezados con el color de acento */
+  color: var(--accent);
   font-weight: 700;
   text-transform: uppercase;
   font-size: 0.7rem;
@@ -101,7 +108,6 @@ const truncarTexto = (texto, limite) => {
 }
 
 .table-row:hover {
-  /* Efecto de resaltado sutil pero oscuro */
   background: var(--bg-input);
 }
 
@@ -144,7 +150,6 @@ const truncarTexto = (texto, limite) => {
 .justify-right { justify-content: flex-end; }
 .text-right { text-align: right !important; }
 
-/* Botones con estilo profesional */
 .btn-action {
   border: 1px solid var(--border);
   padding: 7px 14px;
@@ -168,7 +173,7 @@ const truncarTexto = (texto, limite) => {
 }
 
 .btn-del:hover {
-  background: #cf222e; /* Rojo de error estándar */
+  background: #cf222e;
   border-color: #cf222e;
   color: white;
   transform: translateY(-2px);
