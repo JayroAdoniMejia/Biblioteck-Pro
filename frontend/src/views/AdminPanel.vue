@@ -21,10 +21,11 @@ const vistaGrid = ref(true);
 const mostrarFormulario = ref(false);
 const esModoClaro = ref(document.documentElement.getAttribute('data-theme') === 'light');
 
-// --- SISTEMA DE FAVORITOS Y LECTURAS ---
+// --- SISTEMA DE FAVORITOS, LECTURAS Y CATEGORÍAS ---
 const favoritos = ref(JSON.parse(localStorage.getItem('favs') || '[]'));
 const lecturas = ref(JSON.parse(localStorage.getItem('lecturas') || '{}'));
 const filtroCategoria = ref('Todos');
+const mostrarSoloFavoritos = ref(false); // Nuevo: Estado para el filtro de favoritos
 const categorias = ['Todos', 'Programación', 'Historia', 'Medicina', 'Diseño', 'General'];
 
 const userRole = ref(localStorage.getItem('userRole') || 'LECTOR');
@@ -58,19 +59,26 @@ const logout = () => {
   router.push('/');
 };
 
-// --- LÓGICA DE FILTRADO COMBINADO ---
+// --- LÓGICA DE FILTRADO COMBINADO (Buscador + Categoría + Favoritos) ---
 const librosFiltrados = computed(() => {
   let resultado = libros.value;
   
+  // 1. Filtro de Favoritos
+  if (mostrarSoloFavoritos.value) {
+    resultado = resultado.filter(l => favoritos.value.includes(l.id || l._id));
+  }
+
+  // 2. Filtro de Categoría
+  if (filtroCategoria.value !== 'Todos') {
+    resultado = resultado.filter(l => l.category === filtroCategoria.value);
+  }
+
+  // 3. Filtro de Buscador
   if (filtro.value) {
     const search = filtro.value.toLowerCase();
     resultado = resultado.filter(l => 
       l.title.toLowerCase().includes(search) || l.author.toLowerCase().includes(search)
     );
-  }
-  
-  if (filtroCategoria.value !== 'Todos') {
-    resultado = resultado.filter(l => l.category === filtroCategoria.value);
   }
   
   return resultado;
@@ -153,6 +161,16 @@ onMounted(obtenerLibros);
 
       <div class="category-filters">
         <button 
+          @click="mostrarSoloFavoritos = !mostrarSoloFavoritos"
+          class="cat-pill fav-filter"
+          :class="{ 'active-fav': mostrarSoloFavoritos }"
+        >
+          {{ mostrarSoloFavoritos ? '❤️ Mis Favoritos' : '🤍 Ver Favoritos' }}
+        </button>
+
+        <div class="divider-v"></div>
+
+        <button 
           v-for="cat in categorias" :key="cat"
           @click="filtroCategoria = cat"
           class="cat-pill"
@@ -178,6 +196,12 @@ onMounted(obtenerLibros);
         </div>
 
         <div v-if="vistaGrid" class="books-grid">
+          <div v-if="librosFiltrados.length === 0" class="empty-results">
+            <span class="empty-icon">{{ mostrarSoloFavoritos ? '❤️' : '🔍' }}</span>
+            <h3>{{ mostrarSoloFavoritos ? 'No tienes favoritos guardados' : 'No encontramos lo que buscas' }}</h3>
+            <p>Prueba cambiando los filtros o el texto de búsqueda.</p>
+          </div>
+
           <BookCard 
             v-for="libro in librosFiltrados" 
             :key="libro.id || libro._id" 
@@ -212,12 +236,20 @@ onMounted(obtenerLibros);
 </template>
 
 <style scoped>
-/* --- ESTILOS DE LAS NUEVAS BURBUJAS --- */
+/* --- NUEVOS ESTILOS PARA FILTROS Y ESTADOS VACÍOS --- */
 .category-filters {
   display: flex;
+  align-items: center;
   gap: 12px;
   margin-top: -15px;
   flex-wrap: wrap;
+}
+
+.divider-v {
+  width: 1px;
+  height: 25px;
+  background: var(--border);
+  margin: 0 5px;
 }
 
 .cat-pill {
@@ -232,9 +264,16 @@ onMounted(obtenerLibros);
   transition: all 0.3s ease;
 }
 
-.cat-pill:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+.fav-filter {
+  border-color: #ff4757;
+  color: #ff4757;
+}
+
+.active-fav {
+  background: #ff4757 !important;
+  color: white !important;
+  border-color: #ff4757 !important;
+  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
 }
 
 .cat-pill.active-cat {
@@ -244,7 +283,20 @@ onMounted(obtenerLibros);
   box-shadow: 0 4px 12px rgba(137, 87, 229, 0.3);
 }
 
-/* --- ESTILOS BASE ANTERIORES --- */
+.empty-results {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  background: var(--bg-card);
+  border-radius: 20px;
+  border: 2px dashed var(--border);
+}
+
+.empty-icon { font-size: 3rem; display: block; margin-bottom: 15px; }
+.empty-results h3 { color: var(--text-bright); margin-bottom: 10px; }
+.empty-results p { color: var(--text-muted); }
+
+/* --- ESTILOS BASE --- */
 .book-animation { display: flex; align-items: flex-end; gap: 3px; height: 35px; width: 35px; padding-bottom: 2px; }
 .book-spine { width: 8px; border-radius: 2px; animation: bookStack 1.5s infinite ease-in-out; }
 .s1 { background: var(--accent); height: 15px; animation-delay: 0.1s; }

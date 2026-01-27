@@ -6,6 +6,9 @@ import axios from 'axios';
 const props = defineProps(['baseUrl']);
 const emit = defineEmits(['libroGuardado']);
 
+// 1. Lista de categorías consistente con AdminPanel
+const categoriasDisponibles = ['General', 'Programación', 'Historia', 'Medicina', 'Diseño', 'Sistemas', 'Ciencia'];
+
 // Estado del Formulario
 const nuevoLibro = ref({ 
   title: '', 
@@ -13,14 +16,14 @@ const nuevoLibro = ref({
   category: 'General', 
   year: 2026, 
   description: '',
-  imageUrl: '' // 1. Nuevo campo para la URL de la portada
+  imageUrl: '' 
 });
 
 const archivoSeleccionado = ref(null);
 const fileInput = ref(null);
 const cargando = ref(false);
 const mensajeEstado = ref('');
-const tipoMensaje = ref(''); // 'error' o 'success'
+const tipoMensaje = ref('');
 
 // Lógica de Archivos
 const onFileSelected = (event) => {
@@ -46,7 +49,7 @@ const enviarFormulario = async () => {
   formData.append('category', nuevoLibro.value.category);
   formData.append('year', nuevoLibro.value.year);
   formData.append('description', nuevoLibro.value.description);
-  formData.append('imageUrl', nuevoLibro.value.imageUrl); // 2. Enviamos la URL al backend
+  formData.append('imageUrl', nuevoLibro.value.imageUrl); 
   formData.append('file', archivoSeleccionado.value);
 
   try {
@@ -110,12 +113,10 @@ const limpiarFormulario = () => {
       
       <div class="field-group">
         <label class="accent-label">Categoría</label>
-        <select v-model="nuevoLibro.category" class="input-minimal">
-          <option value="General">General</option>
-          <option value="Programación">Programación</option>
-          <option value="Sistemas">Sistemas</option>
-          <option value="Historia">Historia</option>
-          <option value="Ciencia">Ciencia</option>
+        <select v-model="nuevoLibro.category" class="input-minimal select-custom">
+          <option v-for="cat in categoriasDisponibles" :key="cat" :value="cat">
+            {{ cat }}
+          </option>
         </select>
       </div>
 
@@ -149,7 +150,15 @@ const limpiarFormulario = () => {
 </template>
 
 <style scoped>
-/* (Se mantienen tus estilos anteriores) */
+/* Se mantienen tus estilos base y se añade la personalización del select */
+.select-custom {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23bb86fc' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 15px) center;
+}
+
 .form-card { 
   background: var(--bg-card); 
   padding: 35px; 
@@ -165,7 +174,6 @@ const limpiarFormulario = () => {
 .subtitle { color: var(--text-muted); font-size: 0.85rem; margin-top: 6px; }
 
 .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-
 .field-group { display: flex; flex-direction: column; gap: 8px; }
 
 .accent-label { 
