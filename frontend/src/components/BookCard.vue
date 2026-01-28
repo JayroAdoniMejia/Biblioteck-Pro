@@ -20,9 +20,9 @@
         class="fav-btn" 
         :class="{ 'is-fav': esFavorito }" 
         @click.stop="$emit('fav', libro.id || libro._id)"
-        title="Agregar a favoritos"
+        title="Guardar en mi estante"
       >
-        {{ esFavorito ? '❤️' : '🤍' }}
+        <span class="bookmark-icon">{{ esFavorito ? '🔖' : '📑' }}</span>
       </button>
 
       <div v-if="vecesLeido > 0" class="reads-badge" title="Veces que has abierto este libro">
@@ -46,7 +46,6 @@
 </template>
 
 <script setup>
-// Recibimos las nuevas props desde AdminPanel
 const props = defineProps(['libro', 'esFavorito', 'vecesLeido']);
 defineEmits(['ver', 'fav']);
 
@@ -70,7 +69,6 @@ const truncarTexto = (texto, limite) => {
 </script>
 
 <style scoped>
-/* Estilos base existentes... */
 .book-card {
   background: var(--bg-card);
   border-radius: 16px;
@@ -85,33 +83,46 @@ const truncarTexto = (texto, limite) => {
   position: relative;
 }
 
-/* --- NUEVOS ESTILOS: FAVORITOS Y LECTURAS --- */
+/* --- ESTILO DE MARCAPÁGINAS PROFESIONAL --- */
 .fav-btn {
   position: absolute;
-  top: 15px;
-  left: 15px;
+  top: 12px;
+  left: 12px;
   z-index: 15;
-  background: rgba(255, 255, 255, 0.9);
-  border: none;
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
+  background: rgba(18, 18, 18, 0.6); /* Fondo oscuro para resaltar el icono */
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.fav-btn:hover { transform: scale(1.2); background: white; }
-.fav-btn.is-fav { background: #fff1f1; }
+.fav-btn:hover {
+  transform: scale(1.1) rotate(-5deg);
+  background: rgba(18, 18, 18, 0.8);
+  border-color: var(--accent);
+}
+
+.fav-btn.is-fav {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 4px 15px rgba(137, 87, 229, 0.4);
+}
+
+.bookmark-icon {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
 
 .reads-badge {
   position: absolute;
-  bottom: 15px;
-  left: 15px;
+  bottom: 12px;
+  left: 12px;
   z-index: 5;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(5px);
@@ -125,7 +136,7 @@ const truncarTexto = (texto, limite) => {
   gap: 5px;
 }
 
-/* Estilos de la tarjeta original... */
+/* Estilos de la tarjeta original */
 .book-card:hover {
   transform: translateY(-10px);
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
@@ -194,7 +205,7 @@ const truncarTexto = (texto, limite) => {
 
 .category-badge {
   position: absolute;
-  top: 15px; right: 15px;
+  top: 12px; right: 12px;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(5px);
   color: white;
