@@ -57,7 +57,17 @@ const toggleFavorito = (libroId) => {
 const registrarLectura = (libro) => {
   libroSeleccionado.value = libro;
   const id = libro.id || libro._id;
-  lecturas.value[id] = (lecturas.value[id] || 0) + 1;
+  
+  // Evolución de la lógica de lecturas para soportar progreso y fecha
+  if (typeof lecturas.value[id] !== 'object') {
+    lecturas.value[id] = { veces: (lecturas.value[id] || 0), fecha: null, progreso: 0 };
+  }
+  
+  lecturas.value[id].veces++;
+  lecturas.value[id].fecha = new Date().toISOString();
+  // Simulamos un inicio de lectura al 10% si es nuevo
+  if (lecturas.value[id].progreso === 0) lecturas.value[id].progreso = 10;
+  
   localStorage.setItem('lecturas', JSON.stringify(lecturas.value));
 };
 
@@ -89,6 +99,19 @@ const librosFiltrados = computed(() => {
     );
   }
   return resultado;
+});
+
+// Lógica para "Leídos más recientes"
+const leidosRecientes = computed(() => {
+  return Object.entries(lecturas.value)
+    .filter(([id, data]) => data.fecha)
+    .sort((a, b) => new Date(b[1].fecha) - new Date(a[1].fecha))
+    .slice(0, 4)
+    .map(([id, data]) => {
+      const libro = libros.value.find(l => (l.id || l._id) === id);
+      return libro ? { ...libro, ...data } : null;
+    })
+    .filter(l => l !== null);
 });
 
 const totalLibros = computed(() => librosFiltrados.value.length);
@@ -195,6 +218,24 @@ onMounted(obtenerLibros);
         </button>
       </div>
 
+      <section v-if="leidosRecientes.length > 0 && !mostrarSoloFavoritos" class="recent-section">
+        <h3 class="recent-title-label">📖 Continuar leyendo</h3>
+        <div class="recent-grid">
+          <div v-for="libro in leidosRecientes" :key="libro.id || libro._id" class="recent-card" @click="registrarLectura(libro)">
+            <div class="recent-card-info">
+              <span class="r-title">{{ libro.title }}</span>
+              <span class="r-author">{{ libro.author }}</span>
+            </div>
+            <div class="recent-progress-wrapper">
+              <div class="r-progress-bar">
+                <div class="r-progress-fill" :style="{ width: libro.progreso + '%' }"></div>
+              </div>
+              <span class="r-progress-text">{{ libro.progreso }}%</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <transition name="slide-fade">
         <div v-if="mostrarFormulario && esAdmin" class="form-container">
           <BookForm :baseUrl="API_BASE_URL" @libroGuardado="obtenerLibros" />
@@ -224,7 +265,7 @@ onMounted(obtenerLibros);
             :key="libro.id || libro._id" 
             :libro="libro" 
             :esFavorito="favoritos.includes(libro.id || libro._id)"
-            :vecesLeido="lecturas[libro.id || libro._id] || 0"
+            :vecesLeido="typeof lecturas[libro.id || libro._id] === 'object' ? lecturas[libro.id || libro._id].veces : (lecturas[libro.id || libro._id] || 0)"
             @ver="registrarLectura" 
             @fav="toggleFavorito"
           />
@@ -253,50 +294,34 @@ onMounted(obtenerLibros);
 </template>
 
 <style scoped>
-/* --- ESTANTERÍA CAOBA OSCURO --- */
-.caoba-shelf-view {
-  position: relative;
-  padding-top: 40px;
-  padding-bottom: 100px;
-  gap: 80px 30px !important;
-}
+/* --- NUEVOS ESTILOS: RECIENTES Y PROGRESO --- */
+.recent-section { background: var(--bg-card); padding: 20px; border-radius: 18px; border: 1px solid var(--border); margin-bottom: -10px; }
+.recent-title-label { font-size: 0.95rem; color: var(--text-bright); margin-bottom: 15px; font-weight: 700; }
+.recent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 15px; }
+.recent-card { background: var(--bg-input); padding: 12px; border-radius: 12px; cursor: pointer; border: 1px solid transparent; transition: 0.3s; }
+.recent-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+.r-title { display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.r-author { font-size: 0.75rem; color: var(--text-muted); }
+.recent-progress-wrapper { margin-top: 10px; display: flex; align-items: center; gap: 8px; }
+.r-progress-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.r-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #2ecc71); transition: width 0.6s ease; }
+.r-progress-text { font-size: 0.7rem; font-weight: 800; color: var(--accent); min-width: 30px; }
 
+/* --- ESTANTERÍA CAOBA OSCURO --- */
+.caoba-shelf-view { position: relative; padding-top: 40px; padding-bottom: 100px; gap: 80px 30px !important; }
 .caoba-shelf-view::before {
-  content: "";
-  position: absolute;
-  top: 0; left: -20px; right: -20px; bottom: 0;
-  background-image: linear-gradient(
-    transparent 360px, 
-    #4a1a1a 360px, 
-    #5d2525 362px, 
-    #3d1414 365px, 
-    #2b0d0d 395px, 
-    transparent 395px
-  );
-  background-size: 100% 440px;
-  z-index: 0;
-  pointer-events: none;
+  content: ""; position: absolute; top: 0; left: -20px; right: -20px; bottom: 0;
+  background-image: linear-gradient(transparent 360px, #4a1a1a 360px, #5d2525 362px, #3d1414 365px, #2b0d0d 395px, transparent 395px);
+  background-size: 100% 440px; z-index: 0; pointer-events: none;
 }
 
 /* --- POLVO DE ESTRELLAS --- */
 .magic-particles {
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  pointer-events: none;
-  z-index: 1;
-  background-image: 
-    radial-gradient(circle, #e0a82e 1.2px, transparent 1.2px),
-    radial-gradient(circle, #ffffff 0.8px, transparent 0.8px);
-  background-size: 180px 180px, 280px 280px;
-  animation: magicFloat 25s linear infinite;
-  opacity: 0.35;
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;
+  background-image: radial-gradient(circle, #e0a82e 1.2px, transparent 1.2px), radial-gradient(circle, #ffffff 0.8px, transparent 0.8px);
+  background-size: 180px 180px, 280px 280px; animation: magicFloat 25s linear infinite; opacity: 0.35;
 }
-
-@keyframes magicFloat {
-  0% { background-position: 0 0, 50px 50px; opacity: 0.2; }
-  50% { opacity: 0.4; background-position: 100px 300px, -100px 500px; }
-  100% { background-position: 200px 600px, -200px 1000px; opacity: 0.2; }
-}
+@keyframes magicFloat { 0% { background-position: 0 0, 50px 50px; opacity: 0.2; } 50% { opacity: 0.4; background-position: 100px 300px, -100px 500px; } 100% { background-position: 200px 600px, -200px 1000px; opacity: 0.2; } }
 
 /* --- TUS ESTILOS ORIGINALES INTACTOS --- */
 .category-filters { display: flex; align-items: center; gap: 12px; margin-top: -15px; flex-wrap: wrap; }
