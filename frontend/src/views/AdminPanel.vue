@@ -9,7 +9,7 @@ import BookTable from '../components/BookTable.vue';
 import BookForm from '../components/BookForm.vue';
 import BookModal from '../components/BookModal.vue';
 import BookCard from '../components/BookCard.vue';
-import Toast from '../components/Toast.vue'; // 1. Importamos el nuevo componente
+import Toast from '../components/Toast.vue'; 
 
 const router = useRouter();
 const API_BASE_URL = 'http://localhost:8080/api/books';
@@ -46,10 +46,10 @@ const toggleFavorito = (libroId) => {
   const index = favoritos.value.indexOf(libroId);
   if (index > -1) {
     favoritos.value.splice(index, 1);
-    mostrarNotificacion('Eliminado de tu estante', '📂'); // Notificación al quitar
+    mostrarNotificacion('Eliminado de tu estante', '📂');
   } else {
     favoritos.value.push(libroId);
-    mostrarNotificacion('¡Guardado en tu estante!', '🔖'); // Notificación al guardar
+    mostrarNotificacion('¡Guardado en tu estante!', '🔖');
   }
   localStorage.setItem('favs', JSON.stringify(favoritos.value));
 };
@@ -76,22 +76,18 @@ const logout = () => {
 // --- LÓGICA DE FILTRADO COMBINADO ---
 const librosFiltrados = computed(() => {
   let resultado = libros.value;
-  
   if (mostrarSoloFavoritos.value) {
     resultado = resultado.filter(l => favoritos.value.includes(l.id || l._id));
   }
-
   if (filtroCategoria.value !== 'Todos') {
     resultado = resultado.filter(l => l.category === filtroCategoria.value);
   }
-
   if (filtro.value) {
     const search = filtro.value.toLowerCase();
     resultado = resultado.filter(l => 
       l.title.toLowerCase().includes(search) || l.author.toLowerCase().includes(search)
     );
   }
-  
   return resultado;
 });
 
@@ -208,13 +204,15 @@ onMounted(obtenerLibros);
       <section class="display-section">
         <div class="section-meta">
           <h2 class="section-title">
-            {{ vistaGrid ? '📚 Catálogo' : (esAdmin ? '⚙️ Gestión' : '📖 Lista de Títulos') }}
+            {{ mostrarSoloFavoritos ? '🔖 Mi Estantería de Caoba' : (vistaGrid ? '📚 Catálogo' : (esAdmin ? '⚙️ Gestión' : '📖 Lista de Títulos')) }}
           </h2>
           <div class="badge">{{ librosFiltrados.length }} títulos</div>
           <div v-if="!esAdmin" class="user-badge">Modo Lectura</div>
         </div>
 
-        <div v-if="vistaGrid" class="books-grid">
+        <div v-if="vistaGrid" :class="['books-grid', { 'caoba-shelf-view': mostrarSoloFavoritos }]">
+          <div v-if="mostrarSoloFavoritos" class="magic-particles"></div>
+
           <div v-if="librosFiltrados.length === 0" class="empty-results">
             <span class="empty-icon">{{ mostrarSoloFavoritos ? '🔖' : '🔍' }}</span>
             <h3>{{ mostrarSoloFavoritos ? 'Tu estante está vacío' : 'No encontramos lo que buscas' }}</h3>
@@ -255,7 +253,52 @@ onMounted(obtenerLibros);
 </template>
 
 <style scoped>
-/* (Estilos anteriores se mantienen igual) */
+/* --- ESTANTERÍA CAOBA OSCURO --- */
+.caoba-shelf-view {
+  position: relative;
+  padding-top: 40px;
+  padding-bottom: 100px;
+  gap: 80px 30px !important;
+}
+
+.caoba-shelf-view::before {
+  content: "";
+  position: absolute;
+  top: 0; left: -20px; right: -20px; bottom: 0;
+  background-image: linear-gradient(
+    transparent 360px, 
+    #4a1a1a 360px, 
+    #5d2525 362px, 
+    #3d1414 365px, 
+    #2b0d0d 395px, 
+    transparent 395px
+  );
+  background-size: 100% 440px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* --- POLVO DE ESTRELLAS --- */
+.magic-particles {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  background-image: 
+    radial-gradient(circle, #e0a82e 1.2px, transparent 1.2px),
+    radial-gradient(circle, #ffffff 0.8px, transparent 0.8px);
+  background-size: 180px 180px, 280px 280px;
+  animation: magicFloat 25s linear infinite;
+  opacity: 0.35;
+}
+
+@keyframes magicFloat {
+  0% { background-position: 0 0, 50px 50px; opacity: 0.2; }
+  50% { opacity: 0.4; background-position: 100px 300px, -100px 500px; }
+  100% { background-position: 200px 600px, -200px 1000px; opacity: 0.2; }
+}
+
+/* --- TUS ESTILOS ORIGINALES INTACTOS --- */
 .category-filters { display: flex; align-items: center; gap: 12px; margin-top: -15px; flex-wrap: wrap; }
 .divider-v { width: 1px; height: 25px; background: var(--border); margin: 0 5px; }
 .cat-pill { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); padding: 8px 18px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.3s ease; }
@@ -297,7 +340,7 @@ onMounted(obtenerLibros);
 .section-title { color: var(--text-bright); margin: 0; }
 .badge { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-main); padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; }
 .user-badge { background: rgba(137, 87, 229, 0.1); color: var(--accent); padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; border: 1px solid var(--accent); }
-.books-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; }
+.books-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; position: relative; }
 .slide-fade-enter-active { transition: all 0.3s ease-out; }
 .slide-fade-leave-active { transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1); }
 .slide-fade-enter-from, .slide-fade-leave-to { transform: translateY(-20px); opacity: 0; }
