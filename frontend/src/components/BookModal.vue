@@ -16,17 +16,31 @@
 
           <div class="progress-setter">
             <div class="setter-header">
-              <h4>Tu Progreso</h4>
-              <span class="perc-badge">{{ progreso }}%</span>
+              <h4>Marcador de avance</h4>
+              <span class="perc-badge" :class="{ 'completed': progreso === 100 }">
+                {{ progreso === 100 ? '✅ Terminado' : progreso + '%' }}
+              </span>
             </div>
+            
+            <div class="hitos-grid">
+              <button 
+                v-for="hito in hitos" 
+                :key="hito.val"
+                @click="actualizarProgreso(hito.val)"
+                :class="['hito-btn', { 'active': progreso >= hito.val }]"
+              >
+                {{ hito.label }}
+              </button>
+            </div>
+
             <input 
               type="range" 
               v-model="progreso" 
               min="0" max="100" 
               class="range-input"
-              @change="actualizarProgreso"
+              @change="actualizarProgreso()"
             />
-            <p class="setter-hint">Desliza para actualizar tu avance de lectura</p>
+            <p class="setter-hint">Haz clic en un hito o usa la barra para ajustar</p>
           </div>
 
           <div class="modal-footer">
@@ -60,11 +74,18 @@ import { ref, onMounted } from 'vue';
 const props = defineProps(['libro', 'baseUrl']);
 const emit = defineEmits(['cerrar']);
 
-// Estado local para el slider
 const progreso = ref(0);
 
+// Puntos de control para el usuario
+const hitos = [
+  { label: 'Inicio', val: 10 },
+  { label: '25%', val: 25 },
+  { label: '50%', val: 50 },
+  { label: '75%', val: 75 },
+  { label: '¡Fin!', val: 100 }
+];
+
 onMounted(() => {
-  // Cargar el progreso actual del localStorage al abrir
   const lecturas = JSON.parse(localStorage.getItem('lecturas') || '{}');
   const id = props.libro.id || props.libro._id;
   
@@ -73,7 +94,9 @@ onMounted(() => {
   }
 });
 
-const actualizarProgreso = () => {
+const actualizarProgreso = (nuevoValor = null) => {
+  if (nuevoValor !== null) progreso.value = nuevoValor;
+  
   const lecturas = JSON.parse(localStorage.getItem('lecturas') || '{}');
   const id = props.libro.id || props.libro._id;
 
@@ -82,47 +105,88 @@ const actualizarProgreso = () => {
   }
 
   lecturas[id].progreso = parseInt(progreso.value);
-  lecturas[id].fecha = new Date().toISOString(); // Actualizamos fecha para que suba en "Recientes"
+  lecturas[id].fecha = new Date().toISOString(); 
 
   localStorage.setItem('lecturas', JSON.stringify(lecturas));
 };
 </script>
 
 <style scoped>
-/* --- ESTILOS DEL CONTROL DE PROGRESO --- */
+/* --- ESTILOS MEJORADOS PARA HITOS --- */
 .progress-setter {
   margin-top: 25px;
-  padding: 15px;
+  padding: 18px;
   background: var(--bg-input);
-  border-radius: 12px;
+  border-radius: 15px;
   border: 1px solid var(--border);
 }
+
 .setter-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
+
 .setter-header h4 { margin: 0; font-size: 0.9rem; color: var(--text-bright); }
+
 .perc-badge { 
   background: var(--accent); 
   color: white; 
-  padding: 2px 8px; 
-  border-radius: 6px; 
-  font-size: 0.8rem; 
+  padding: 3px 10px; 
+  border-radius: 8px; 
+  font-size: 0.75rem; 
   font-weight: 800; 
+  transition: all 0.3s ease;
 }
+
+.perc-badge.completed {
+  background: #2ecc71;
+  box-shadow: 0 0 12px rgba(46, 204, 113, 0.3);
+}
+
+.hitos-grid {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 15px;
+}
+
+.hito-btn {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 6px 2px;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hito-btn:hover {
+  border-color: var(--accent);
+  color: var(--text-bright);
+}
+
+.hito-btn.active {
+  background: rgba(137, 87, 229, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .range-input {
   width: 100%;
   accent-color: var(--accent);
   cursor: pointer;
-  height: 6px;
+  height: 4px;
 }
+
 .setter-hint {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--text-muted);
-  margin-top: 8px;
-  font-style: italic;
+  margin-top: 10px;
+  text-align: center;
 }
 
 /* --- TUS ESTILOS ORIGINALES --- */
