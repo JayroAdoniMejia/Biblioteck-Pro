@@ -1,61 +1,100 @@
+<script setup>
+import { computed } from 'vue';
+
+const props = defineProps({
+  isDark: {
+    type: Boolean,
+    default: true
+  }
+});
+
+// Generamos un array fijo para las partículas para evitar re-renders innecesarios
+const particles = Array.from({ length: 20 });
+</script>
+
 <template>
-  <div class="fx-container" :class="isDark ? 'dark-particles' : 'light-confetti'">
-    <div v-for="n in 30" :key="n" class="particle"></div>
+  <div class="fx-container" :class="{ 'mode-dark': isDark, 'mode-light': !isDark }">
+    <template v-if="isDark">
+      <div v-for="n in 3" :key="'layer-'+n" :class="'stars layer-' + n"></div>
+    </template>
+
+    <template v-else>
+      <div v-for="i in particles" :key="'p-'+i" class="confetti"></div>
+    </template>
   </div>
 </template>
-
-<script setup>
-defineProps(['isDark']);
-</script>
 
 <style scoped>
 .fx-container {
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0; /* Por detrás de todo */
   pointer-events: none;
-  z-index: 0; /* Por detrás de las cards pero sobre el fondo base */
   overflow: hidden;
+  transition: background 0.5s ease;
 }
 
-.particle {
+/* --- MODO OSCURO: POLVO ESTELAR --- */
+.mode-dark {
+  background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+}
+
+.stars {
   position: absolute;
-  top: -20px;
-  width: 6px; height: 6px;
-  animation: fall linear infinite;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 200%;
 }
 
-/* --- MODO DARK: Partículas Blancas --- */
-.dark-particles .particle {
-  background: white;
-  border-radius: 50%;
-  opacity: 0.4;
-  box-shadow: 0 0 8px white;
+.layer-1 {
+  background: radial-gradient(circle, #ffffff 1px, transparent 1px);
+  background-size: 100px 100px;
+  animation: moveUp 100s linear infinite;
+  opacity: 0.3;
 }
 
-/* --- MODO LIGHT: Confeti --- */
-.light-confetti .particle {
+.layer-2 {
+  background: radial-gradient(circle, #e0a82e 1.5px, transparent 1.5px);
+  background-size: 150px 150px;
+  animation: moveUp 70s linear infinite;
+  opacity: 0.2;
+}
+
+@keyframes moveUp {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
+
+/* --- MODO CLARO: CONFETI --- */
+.mode-light {
+  background: #f8fafc;
+}
+
+.confetti {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--accent, #8957e5);
+  top: -10px;
   border-radius: 2px;
+  animation: fall var(--d) linear infinite;
+  opacity: 0.6;
+  left: var(--l);
 }
-.light-confetti .particle:nth-child(3n) { background: #ff7675; }
-.light-confetti .particle:nth-child(3n+1) { background: #74b9ff; }
-.light-confetti .particle:nth-child(3n+2) { background: #55efc4; }
+
+/* Generamos variaciones aleatorias para el confeti */
+.confetti:nth-child(4n) { background: #2ecc71; --d: 12s; --l: 10%; }
+.confetti:nth-child(4n+1) { background: #3498db; --d: 15s; --l: 35%; }
+.confetti:nth-child(4n+2) { background: #e74c3c; --d: 10s; --l: 65%; }
+.confetti:nth-child(4n+3) { background: #f1c40f; --d: 18s; --l: 85%; }
 
 @keyframes fall {
-  0% { transform: translateY(0vh) rotate(0deg); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+  to {
+    transform: translateY(105vh) rotate(360deg);
+  }
 }
-
-/* Distribución aleatoria simple */
-.particle:nth-child(n) { left: calc(10% * var(--i, 1)); animation-duration: calc(5s + var(--i, 1) * 1s); }
-/* Para no usar JS, distribuimos manualmente algunos */
-.particle:nth-child(1) { left: 5%; animation-delay: 0s; }
-.particle:nth-child(2) { left: 15%; animation-delay: 2s; }
-.particle:nth-child(3) { left: 25%; animation-delay: 4s; }
-.particle:nth-child(4) { left: 40%; animation-delay: 1s; }
-.particle:nth-child(5) { left: 60%; animation-delay: 3s; }
-.particle:nth-child(6) { left: 85%; animation-delay: 5s; }
-/* ... añade más si quieres más densidad ... */
 </style>
